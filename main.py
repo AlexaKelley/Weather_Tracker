@@ -1,13 +1,15 @@
 from google.cloud import storage
 from google.cloud import secretmanager
-from datetime import datetime
 import os
 import json
+import pytz
+import datetime
 
 def gcs_writer(blob_text):
     # Setting time and defining vars
-    time_var = datetime.now()
-    formated_time = time_var.strftime('"%Y-%m-%d - %H:%M"')
+    utc_now = pytz.utc.localize(datetime.datetime.utcnow())
+    est_now = utc_now.astimezone(pytz.timezone("America/Detroit"))
+    formated_time = est_now.strftime('"%Y-%m-%d - %H:%M"')
     destination_blob_name = formated_time+"weather_tracking"
     bucket_name = os.environ.get('bucket_name')
     # Building client and writing the blob to bucket
@@ -34,10 +36,8 @@ def weather_call():
     exported_json = json.dumps(response_json)
     return(exported_json)
 
-def main():
+def main(data,context):
     # make the api call
     blob_text = weather_call()
     # write the string to the bucket
     gcs_writer(blob_text)
-
-main()
